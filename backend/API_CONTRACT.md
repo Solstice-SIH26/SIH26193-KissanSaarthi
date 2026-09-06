@@ -412,3 +412,10 @@ This endpoint performs only database reads. It does not:
 - Token cancellation through voice
 - Notifications or daily calls
 - Call analytics or transcript storage
+
+For Vapi browser/web calls, caller-number metadata may be absent.
+
+- Missing phone with `DEMO_MODE=true` uses `DEMO_FARMER_ID` and returns `caller_number: null`.
+- Missing phone with `DEMO_MODE=false` returns an embedded missing-phone error.
+- This behaviour applies only to `POST /webhooks/vapi`.
+- `GET /voice/context` continues to require a phone number.

@@ -96,14 +96,34 @@ def _extract_caller_phone(message: dict, arguments: dict) -> Optional[str]:
 
 
 def _identify_farmer(message: dict, arguments: dict) -> dict:
-    """Shared caller-identification path. Raises HTTPException on any
-    failure; the per-tool-call dispatcher below converts that into an
-    embedded error rather than failing the whole webhook request."""
     raw_phone = _extract_caller_phone(message, arguments)
+
+    # Vapi browser/web calls do not contain telephone caller metadata.
+    # In prototype demo mode, use the dedicated demo farmer.
     if not raw_phone:
-        raise HTTPException(status_code=400, detail="Missing caller phone number.")
+        demo_mode = (
+            os.environ.get("DEMO_MODE", "false")
+            .strip()
+            .lower()
+            == "true"
+        )
+
+        if not demo_mode:
+            raise HTTPException(
+                status_code=400,
+                detail="Missing caller phone number.",
+            )
+
+        farmer = _resolve_demo_farmer()
+
+        return {
+            "farmer": farmer,
+            "normalized_phone": None,
+            "demo_mode_used": True,
+        }
 
     normalized = normalize_indian_phone(raw_phone)
+
     if not normalized:
         raise HTTPException(
             status_code=400,
@@ -114,14 +134,27 @@ def _identify_farmer(message: dict, arguments: dict) -> dict:
     farmer = _find_farmer_by_phone(normalized)
 
     if farmer is None:
-        demo_mode = os.environ.get("DEMO_MODE", "false").strip().lower() == "true"
+        demo_mode = (
+            os.environ.get("DEMO_MODE", "false")
+            .strip()
+            .lower()
+            == "true"
+        )
+
         if not demo_mode:
-            raise HTTPException(status_code=404, detail="No farmer is registered with this number.")
+            raise HTTPException(
+                status_code=404,
+                detail="No farmer is registered with this number.",
+            )
+
         farmer = _resolve_demo_farmer()
         demo_mode_used = True
 
-    return {"farmer": farmer, "normalized_phone": normalized, "demo_mode_used": demo_mode_used}
-
+    return {
+        "farmer": farmer,
+        "normalized_phone": normalized,
+        "demo_mode_used": demo_mode_used,
+    }
 
 # ---------------------------------------------------------------------
 # get_token_status — all-status token fetch (not just active).

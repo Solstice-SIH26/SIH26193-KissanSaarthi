@@ -421,3 +421,46 @@ def test_supabase_error_is_handled_gracefully(monkeypatch):
     assert r.status_code == 200  # request itself doesn't fail
     result = _result_json(r)
     assert "error" in result
+
+def test_get_farmer_context_missing_phone_uses_demo_farmer(monkeypatch):
+    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO_FARMER_ID", DEMO_FARMER_ID)
+    _patch_all_supabase(monkeypatch, _base_tables())
+
+    body = _webhook_body([
+        _tool_call("c1", "get_farmer_context")
+    ])
+
+    response = _post(body)
+
+    assert response.status_code == 200
+
+    result = _result_json(response)
+
+    assert result["demo_mode_used"] is True
+    assert result["caller_number"] is None
+    assert result["farmer_name"] == "Demo Farmer"
+
+def test_get_token_status_missing_phone_uses_demo_farmer(monkeypatch):
+    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO_FARMER_ID", DEMO_FARMER_ID)
+
+    tables = _base_tables()
+
+    # Give one token to the demo farmer.
+    tables["tokens"][0]["farmer_id"] = DEMO_FARMER_ID
+
+    _patch_all_supabase(monkeypatch, tables)
+
+    body = _webhook_body([
+        _tool_call("c1", "get_token_status")
+    ])
+
+    response = _post(body)
+
+    assert response.status_code == 200
+
+    result = _result_json(response)
+
+    assert result["farmer_name"] == "Demo Farmer"
+    assert len(result["tokens"]) == 1
