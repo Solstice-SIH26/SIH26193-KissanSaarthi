@@ -1,0 +1,143 @@
+.home-page {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #1a2e1a;
+  background: #f4f6ee;
+}
+
+/* HERO */
+.home-hero {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  padding: 64px 8%;
+  flex-wrap: wrap;
+}
+
+.home-hero-text {
+  flex: 1 1 400px;
+}
+
+.home-brand {
+  display: inline-block;
+  font-weight: bold;
+  margin-bottom: 16px;
+  color: #2f5233;
+}
+
+.home-hero-text h1 {
+  font-size: 2.4rem;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+.home-hero-text p {
+  font-size: 1.05rem;
+  color: #444;
+  margin-bottom: 24px;
+  max-width: 480px;
+}
+
+.home-hero-image {
+  flex: 1 1 320px;
+}
+
+.home-hero-image img {
+  width: 100%;
+  border-radius: 12px;
+  object-fit: cover;
+  max-height: 420px;
+}
+
+.home-cta {
+  background: #2f5233;
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.home-cta:hover {
+  background: #24401f;
+}
+
+/* HOW IT WORKS */
+.home-how {
+  padding: 48px 8%;
+  text-align: center;
+}
+
+.home-how h2 {
+  margin-bottom: 32px;
+}
+
+.home-how-grid {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.home-how-card {
+  background: white;
+  border-radius: 10px;
+  padding: 28px;
+  flex: 1 1 260px;
+  max-width: 300px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.home-how-icon {
+  font-size: 1.8rem;
+}
+
+.home-how-card h3 {
+  margin: 12px 0 8px;
+}
+
+.home-how-card p {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+/* IMPACT */
+.home-impact {
+  padding: 48px 8%;
+  background: #eaf0e3;
+  text-align: center;
+}
+
+.home-impact h2 {
+  margin-bottom: 32px;
+}
+
+.home-impact-grid {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: left;
+}
+
+.home-impact-grid > div {
+  flex: 1 1 260px;
+  max-width: 320px;
+}
+
+.home-impact-grid h3 {
+  color: #2f5233;
+  margin-bottom: 8px;
+}
+
+.home-impact-grid p {
+  font-size: 0.95rem;
+  color: #444;
+}
+
+/* FOOTER CTA */
+.home-footer-cta {
+  text-align: center;
+  padding: 56px 8%;
+}
