@@ -360,8 +360,14 @@ def test_list_active_centres_returns_only_active(monkeypatch):
     names = [c["name"] for c in result["centres"]]
     assert "Karnal Mandi Center 3" in names
     assert "Closed Center" not in names
-    # minimal field set only
-    assert set(result["centres"][0].keys()) == {"name", "location", "crop_type", "msp_rate"}
+    # Centre ID is retained internally for the future booking tool.
+    assert set(result["centres"][0].keys()) == {
+        "id",
+        "name",
+        "location",
+        "crop_type",
+        "msp_rate",
+    }
 
 
 # ---------------------------------------------------------------------
