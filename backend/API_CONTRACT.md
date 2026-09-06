@@ -268,3 +268,147 @@ relationship, so the caller doesn't need a second lookup.
 **Out of scope for this milestone (tracked separately):** the
 `POST /webhooks/vapi` event/tool-call handler, token creation or
 cancellation via voice, call analytics/transcript storage.
+
+**Out of scope for this milestone:** the `POST /webhooks/vapi` event/tool-call handler (documented in Section 6 below), token creation or cancellation through voice, and call analytics/transcript storage.
+
+---
+
+## 6. Voice (Vapi) — read-only tool-call webhook
+
+**Milestone 2. Read-only.** This endpoint never creates, approves, rejects, cancels, or otherwise changes a token or procurement centre. All database writes continue to use the existing `/tokens` and `/centers` endpoints.
+
+### `POST /webhooks/vapi`
+
+**Authentication:**
+
+```text
+Authorization: Bearer <VAPI_WEBHOOK_SECRET>
+```
+
+- Missing or incorrect authorization header → `401`
+- `VAPI_WEBHOOK_SECRET` not configured on the server → `500`
+
+### Request body
+
+The endpoint accepts a Vapi `tool-calls` server message:
+
+```json
+{
+  "message": {
+    "type": "tool-calls",
+    "toolCallList": [
+      {
+        "id": "call_abc123",
+        "function": {
+          "name": "get_farmer_context",
+          "arguments": {}
+        }
+      }
+    ],
+    "call": {
+      "customer": {
+        "number": "+919876543210"
+      }
+    }
+  }
+}
+```
+
+The caller’s phone number is checked in this order:
+
+1. `message.customer.number`
+2. `message.call.customer.number`
+3. The `phone` tool argument
+
+The `phone` argument allows local testing through curl or the Vapi dashboard without making a real call.
+
+### Supported tools
+
+| Tool | Arguments | Behaviour |
+|---|---|---|
+| `get_farmer_context` | None | Identifies the registered or demo farmer and returns their name and active `pending`, `waiting`, or `called` tokens. |
+| `get_token_status` | `token_id` (optional), `token_number` (optional) | Returns the identified farmer’s tokens in any status. With no arguments, it returns all tokens. `token_id` selects one exact token. `token_number` returns matching tokens belonging to that farmer. |
+| `list_active_centres` | `crop_type` (optional) | Returns active procurement centres containing `id`, `name`, `location`, `crop_type`, and `msp_rate`. Caller identification is not required. |
+
+The centre `id` is kept in the tool response so it can be used during the future voice-booking milestone. The assistant does not need to read the UUID aloud.
+
+`token_number` is a real database column. It remains `null` while a request is pending and is assigned when staff approves the request.
+
+### Success response
+
+Once authentication and the top-level payload structure are valid, the endpoint returns `200 OK`:
+
+```json
+{
+  "results": [
+    {
+      "toolCallId": "call_abc123",
+      "result": "{\"demo_mode_used\": false, \"caller_number\": \"+919876543210\", \"farmer_name\": \"Ramesh Kumar\", \"active_tokens\": []}"
+    }
+  ]
+}
+```
+
+`result` is a JSON-encoded string. One result is returned for every incoming tool call and matched using `toolCallId`.
+
+### Error handling
+
+#### Top-level HTTP errors
+
+These errors prevent the complete request from being processed:
+
+- `400` — malformed JSON
+- `400` — missing `message` object
+- `400` — missing or empty `toolCallList`
+- `400` — a tool call is missing its `id`
+- `401` — missing or incorrect authorization header
+- `500` — `VAPI_WEBHOOK_SECRET` is not configured on the server
+
+#### Tool-level errors
+
+These errors are returned inside that tool call’s `result`. The overall HTTP response remains `200`:
+
+```json
+{
+  "results": [
+    {
+      "toolCallId": "call_abc123",
+      "result": "{\"error\": \"Missing caller phone number.\"}"
+    }
+  ]
+}
+```
+
+Tool-level errors include:
+
+- Unsupported tool name
+- Missing caller phone number
+- Invalid Indian phone number
+- Caller not registered while `DEMO_MODE=false`
+- Missing, invalid or unknown `DEMO_FARMER_ID`
+- No token matching the supplied `token_id` or `token_number`
+- Unexpected Supabase error
+
+Returning errors per tool call allows other tool calls in the same request to complete independently.
+
+### Read-only guarantee
+
+This endpoint performs only database reads. It does not:
+
+- Create token requests
+- Approve or reject requests
+- Change token status
+- Cancel tokens
+- Create or update procurement centres
+- Store call transcripts or analytics
+
+### Out of scope for Milestone 2
+
+- Vapi assistant configuration
+- Twilio phone-number connection
+- Voice token creation
+- Maximum-three validation through voice
+- Duplicate-date validation through voice
+- Token cancellation through voice
+- Notifications or daily calls
+- Call analytics or transcript storage

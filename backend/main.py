@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import tokens, centers, users, voice
+from routers import tokens, centers, users, voice, webhooks
 
 app = FastAPI(
     title="SIH PS26032 — Procurement Center API",
@@ -24,6 +24,7 @@ app.include_router(tokens.router)
 app.include_router(centers.router)
 app.include_router(users.router)
 app.include_router(voice.router)
+app.include_router(webhooks.router)
 
 @app.get("/health", tags=["meta"])
 def health():
