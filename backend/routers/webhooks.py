@@ -1,16 +1,23 @@
 """
-Voice (Vapi) integration — Milestone 2: read-only webhook.
+Voice (Vapi) integration — Milestone 2 (read-only tools) + Milestone 5
+(confirmed token booking).
 
-POST /webhooks/vapi handles Vapi's "tool-calls" server messages for three
-read-only tools:
+POST /webhooks/vapi handles Vapi's "tool-calls" server messages for four
+tools:
 
-    get_farmer_context   - identify caller, return name + active tokens
-    get_token_status      - return the farmer's token(s), any status
-    list_active_centres   - list active procurement centres
+    get_farmer_context     - identify caller, return name + active tokens
+    get_token_status        - return the farmer's token(s), any status
+    list_active_centres     - list active procurement centres
+    create_token_request    - create ONE pending token request, after the
+                               caller has explicitly confirmed the details
+                               (Milestone 5). This is the only tool that
+                               writes anything.
 
-This endpoint does NOT create, approve, reject, cancel, or otherwise
-mutate anything. All Supabase writes still go exclusively through the
-existing /tokens and /centers routers.
+This endpoint never approves, rejects, cancels, or changes token status —
+those stay staff-only, through the existing /tokens routes. The only
+write path this endpoint exposes is a brand-new 'pending' request, and
+only via services.voice_booking.create_voice_token_request(), which
+reuses routers.tokens.create_token() rather than duplicating its rules.
 
 Reuse:
     - normalize_indian_phone, _find_farmer_by_phone, _resolve_demo_farmer,
@@ -18,6 +25,10 @@ Reuse:
       (Milestone 1) rather than reimplemented here.
     - list_active_centres calls routers.centers.list_centers() directly
       instead of re-querying procurement_centers.
+    - create_token_request calls
+      services.voice_booking.create_voice_token_request(), which itself
+      calls routers.tokens.create_token() directly for the existing
+      same-day / max-3-active rules and the actual insert.
 
 Error handling model:
     - Missing/wrong VAPI_WEBHOOK_SECRET, or a structurally malformed
@@ -26,12 +37,12 @@ Error handling model:
       these cases.
     - Everything else (unsupported tool name, missing/invalid caller
       phone, farmer not found with demo mode off, misconfigured demo
-      farmer, unexpected Supabase errors) is embedded as
-      {"error": "..."} inside that specific tool call's `result` string,
-      with the HTTP response staying 200. Vapi sends one matched result
-      per toolCallId; failing the whole HTTP request over one bad tool
-      call in a batch would silence the assistant for every other tool
-      call in the same request too.
+      farmer, booking validation failures, unexpected Supabase errors)
+      is embedded as {"error": "..."} inside that specific tool call's
+      `result` string, with the HTTP response staying 200. Vapi sends
+      one matched result per toolCallId; failing the whole HTTP request
+      over one bad tool call in a batch would silence the assistant for
+      every other tool call in the same request too.
 """
 
 import json
@@ -49,12 +60,17 @@ from routers.voice import (
     _resolve_demo_farmer,
     normalize_indian_phone,
 )
+from services.voice_booking import create_voice_token_request
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 logger = logging.getLogger(__name__)
 
-SUPPORTED_TOOLS = ("get_farmer_context", "get_token_status", "list_active_centres")
-
+SUPPORTED_TOOLS = (
+    "get_farmer_context",
+    "get_token_status",
+    "list_active_centres",
+    "create_token_request",
+)
 
 # ---------------------------------------------------------------------
 # Auth (same secret/scheme as GET /voice/context)
@@ -244,11 +260,25 @@ def _handle_list_active_centres(message: dict, arguments: dict) -> dict:
     ]
     return {"centres": summary}
 
+def _handle_create_token_request(message: dict, arguments: dict) -> dict:
+    """
+    Milestone 5. Identifies the caller exactly like the read-only tools
+    do, then hands off to services.voice_booking for every booking-
+    specific check (centre exists/active/crop match, quantity, date,
+    explicit confirmation) plus the actual insert via the existing
+    routers.tokens.create_token(). This is the only tool call in this
+    file that can write to the database.
+    """
+    ctx = _identify_farmer(message, arguments)
+    farmer = ctx["farmer"]
+    return create_voice_token_request(str(farmer["id"]), arguments)
+
 
 _TOOL_HANDLERS = {
     "get_farmer_context": _handle_get_farmer_context,
     "get_token_status": _handle_get_token_status,
     "list_active_centres": _handle_list_active_centres,
+    "create_token_request": _handle_create_token_request,
 }
 
 

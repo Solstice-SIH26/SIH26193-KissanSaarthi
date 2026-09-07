@@ -265,17 +265,13 @@ relationship, so the caller doesn't need a second lookup.
   - `{"detail": "DEMO_FARMER_ID is not a valid UUID."}`
   - `{"detail": "DEMO_FARMER_ID does not match any farmer profile."}`
 
-**Out of scope for this milestone (tracked separately):** the
-`POST /webhooks/vapi` event/tool-call handler, token creation or
-cancellation via voice, call analytics/transcript storage.
-
-**Out of scope for this milestone:** the `POST /webhooks/vapi` event/tool-call handler (documented in Section 6 below), token creation or cancellation through voice, and call analytics/transcript storage.
+**Out of scope for this milestone:** the `POST /webhooks/vapi` event/tool-call handler (documented in Section 6 below), token cancellation through voice, and call analytics/transcript storage. Voice token *creation* is documented in Section 6 (Milestone 5).
 
 ---
 
-## 6. Voice (Vapi) — read-only tool-call webhook
+## 6. Voice (Vapi) — tool-call webhook
 
-**Milestone 2. Read-only.** This endpoint never creates, approves, rejects, cancels, or otherwise changes a token or procurement centre. All database writes continue to use the existing `/tokens` and `/centers` endpoints.
+**Milestone 2** added three read-only tools. **Milestone 5** adds one write tool, `create_token_request`, which creates a single new `pending` token request — nothing else. This endpoint still never approves, rejects, cancels, or changes the status of a token, and never creates or updates a procurement centre. Every other write continues to go exclusively through the existing `/tokens` and `/centers` endpoints, and `create_token_request` itself creates its row by calling the same `create_token()` function `POST /tokens` uses — not a separate insert path.
 
 ### `POST /webhooks/vapi`
 
@@ -329,10 +325,23 @@ The `phone` argument allows local testing through curl or the Vapi dashboard wit
 | `get_farmer_context` | None | Identifies the registered or demo farmer and returns their name and active `pending`, `waiting`, or `called` tokens. |
 | `get_token_status` | `token_id` (optional), `token_number` (optional) | Returns the identified farmer’s tokens in any status. With no arguments, it returns all tokens. `token_id` selects one exact token. `token_number` returns matching tokens belonging to that farmer. |
 | `list_active_centres` | `crop_type` (optional) | Returns active procurement centres containing `id`, `name`, `location`, `crop_type`, and `msp_rate`. Caller identification is not required. |
+| `create_token_request` | `center_id` (required), `crop_type` (required), `quantity_kg` (required), `requested_date` (required, `YYYY-MM-DD`), `confirmed` (required, boolean) | Creates one new `pending` token request for the identified farmer, after every check below passes. **The only tool that writes to the database.** |
 
-The centre `id` is kept in the tool response so it can be used during the future voice-booking milestone. The assistant does not need to read the UUID aloud.
+The centre `id` returned by `list_active_centres` is what the assistant should pass back as `center_id` to `create_token_request`. The assistant does not need to read the UUID aloud to the farmer.
 
-`token_number` is a real database column. It remains `null` while a request is pending and is assigned when staff approves the request.
+`token_number` is a real database column. It remains `null` while a request is pending and is assigned when staff approves the request — `create_token_request` never sets it.
+
+### `create_token_request` — validation order
+
+1. `confirmed` must be exactly `true`. Anything else (missing, `false`, a string) is rejected — the assistant must have already read the details back and gotten explicit agreement before calling this tool.
+2. `center_id` must be a real procurement centre.
+3. That centre must have `is_active: true`.
+4. `crop_type` must match that centre’s `crop_type` (case-insensitive). Each centre grows exactly one crop, matching `GET /centers`.
+5. `quantity_kg` must be a positive number.
+6. `requested_date` must be a valid `YYYY-MM-DD` date, not in the past, and — only when the centre has `open_date`/`close_date` set — inside that window.
+7. Only after all of the above: the existing `routers.tokens.create_token()` rules run unchanged — one active request per farmer per date, and a maximum of 3 active (`pending`/`waiting`/`called`) requests per farmer.
+
+The row is stored with the *centre's* canonical `crop_type` value, not necessarily the exact word the farmer used, so spelling/casing differences on the call don't create inconsistent data.
 
 ### Success response
 
@@ -389,27 +398,39 @@ Tool-level errors include:
 - No token matching the supplied `token_id` or `token_number`
 - Unexpected Supabase error
 
+`create_token_request` additionally embeds an error for:
+
+- `confirmed` missing or not `true`
+- Missing or malformed `center_id`
+- Centre not found
+- Centre not currently active (`is_active: false`)
+- `crop_type` missing, or not matching the centre’s crop
+- `quantity_kg` missing, non-numeric, zero, or negative
+- `requested_date` missing or not `YYYY-MM-DD`
+- `requested_date` in the past
+- `requested_date` outside the centre’s `open_date`/`close_date` window (when set)
+- Farmer already has an active request for that date
+- Farmer already has 3 active requests
+
+The last two re-use `routers.tokens.create_token()`’s existing messages unchanged.
+
 Returning errors per tool call allows other tool calls in the same request to complete independently.
 
-### Read-only guarantee
+### Write scope
 
-This endpoint performs only database reads. It does not:
+`create_token_request` is the only tool call that writes to the database, and it can only ever insert one new `pending` token row. This endpoint still never:
 
-- Create token requests
-- Approve or reject requests
-- Change token status
-- Cancel tokens
-- Create or update procurement centres
-- Store call transcripts or analytics
+- Approves or rejects requests
+- Changes token status (`waiting`/`called`/`completed`)
+- Cancels tokens
+- Creates or updates procurement centres
+- Stores call transcripts or analytics
 
-### Out of scope for Milestone 2
+### Out of scope for Milestone 5
 
-- Vapi assistant configuration
-- Twilio phone-number connection
-- Voice token creation
-- Maximum-three validation through voice
-- Duplicate-date validation through voice
-- Token cancellation through voice
+- Vapi assistant configuration and Twilio phone-number connection (Milestones 3–4)
+- Token cancellation through voice (planned for Milestone 6)
+- An idempotency key for retried tool calls — not added in this milestone; see the concurrency note in `services/voice_booking.py`. A retried booking for the same date is caught by the existing same-day-active-request rule instead.
 - Notifications or daily calls
 - Call analytics or transcript storage
 
