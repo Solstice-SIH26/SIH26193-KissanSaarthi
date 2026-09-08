@@ -1,15 +1,11 @@
+
 import { useState, useEffect, useCallback } from "react";
 import "./FarmerDashboard.css";
 
 import { requestToken, getToken } from "../../services/tokenService.js";
 import { getCenters } from "../../services/scheduleService.js";
 import { getCropPrices } from "../../services/priceService.js";
-
-/*
- * TEMPORARY DEMO VALUE
- * Replace with the authenticated farmer ID once auth is connected.
- */
-const DEMO_FARMER_ID = "d8d7e3ce-2f36-4292-bf66-f748fa91ed4e";
+import { supabase } from "../../supabaseClient";
 
 /**
  * Map backend status to a human-readable label.
@@ -52,8 +48,6 @@ function formatPrice(amount) {
 /**
  * DISPLAY-ONLY helper: maps a backend status to a step index
  * for the visual progress tracker. Does not affect any logic.
- * Rejected/cancelled are treated as a terminal "stopped" state
- * and shown separately rather than on the happy-path stepper.
  */
 const STEP_ORDER = ["pending", "waiting", "called", "completed"];
 
@@ -120,6 +114,7 @@ function TokenProgress({ status }) {
           >
             {i < currentStep ? "✓" : i + 1}
           </div>
+
           <span
             className={`farmer-dash__progress-label ${
               i <= currentStep ? "farmer-dash__progress-label--done" : ""
@@ -127,6 +122,7 @@ function TokenProgress({ status }) {
           >
             {step.label}
           </span>
+
           {i < steps.length - 1 && (
             <div
               className={`farmer-dash__progress-line ${
@@ -155,6 +151,12 @@ function FarmerDashboard() {
   const [isRefreshingToken, setIsRefreshingToken] = useState(false);
 
   /* ─────────────────────────────────────────────
+     AUTHENTICATED FARMER STATE
+  ───────────────────────────────────────────── */
+
+  const [farmerId, setFarmerId] = useState(null);
+
+  /* ─────────────────────────────────────────────
      CENTER STATE
   ───────────────────────────────────────────── */
 
@@ -179,7 +181,32 @@ function FarmerDashboard() {
 
   /* Selected center object */
 
-  const selectedCenter = centers.find((c) => c.id === selectedCenterId) || null;
+  const selectedCenter =
+    centers.find((c) => c.id === selectedCenterId) || null;
+
+  /* ─────────────────────────────────────────────
+     LOAD CURRENT AUTHENTICATED FARMER
+  ───────────────────────────────────────────── */
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCurrentUser() {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (cancelled) return;
+
+      if (!error && data?.user) {
+        setFarmerId(data.user.id);
+      }
+    }
+
+    loadCurrentUser();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   /* ─────────────────────────────────────────────
      LOAD CENTERS
@@ -255,9 +282,8 @@ function FarmerDashboard() {
   ───────────────────────────────────────────── */
 
   const handleRequestToken = useCallback(async () => {
-    if (!selectedCenterId || !requestedDate || !quantityKg) {
+    if (!farmerId || !selectedCenterId || !requestedDate || !quantityKg) {
       setTokenError("Please select a center, date, and quantity.");
-
       return;
     }
 
@@ -265,7 +291,6 @@ function FarmerDashboard() {
 
     if (!Number.isFinite(quantity) || quantity <= 0) {
       setTokenError("Quantity must be greater than 0 kg.");
-
       return;
     }
 
@@ -274,11 +299,11 @@ function FarmerDashboard() {
 
     try {
       const newToken = await requestToken(
-        DEMO_FARMER_ID,
+        farmerId,
         selectedCenterId,
         requestedDate,
         selectedCenter?.crop_type,
-        quantity,
+        quantity
       );
 
       localStorage.setItem("farmerTokenId", newToken.id);
@@ -303,12 +328,18 @@ function FarmerDashboard() {
         err.body?.detail ||
           (err.status
             ? `Request failed (${err.status}). Please try again.`
-            : "Unable to reach the server. Please try again later."),
+            : "Unable to reach the server. Please try again later.")
       );
     } finally {
       setTokenLoading(false);
     }
-  }, [selectedCenterId, requestedDate, quantityKg, selectedCenter]);
+  }, [
+    farmerId,
+    selectedCenterId,
+    requestedDate,
+    quantityKg,
+    selectedCenter,
+  ]);
 
   /* ─────────────────────────────────────────────
      REFRESH TOKEN / REQUEST STATUS
@@ -337,7 +368,7 @@ function FarmerDashboard() {
       setTokenError(
         err.status
           ? `Refresh failed (${err.status}). Please try again.`
-          : "Unable to reach the server. Please try again later.",
+          : "Unable to reach the server. Please try again later."
       );
     } finally {
       setIsRefreshingToken(false);
@@ -425,6 +456,7 @@ function FarmerDashboard() {
         <span className="farmer-dash__header-icon" aria-hidden="true">
           🌾
         </span>
+
         <div>
           <h1 className="farmer-dash__title">Farmer Dashboard</h1>
 
@@ -438,7 +470,10 @@ function FarmerDashboard() {
           SECTION 1 — MY TOKEN / REQUEST
       ═══════════════════════════════════════ */}
 
-      <section className="farmer-dash__section" aria-labelledby="token-heading">
+      <section
+        className="farmer-dash__section"
+        aria-labelledby="token-heading"
+      >
         <h2 id="token-heading" className="farmer-dash__section-title">
           <span aria-hidden="true">🎫</span> My Procurement Request
         </h2>
@@ -476,7 +511,9 @@ function FarmerDashboard() {
 
                 <div className="farmer-dash__detail-row">
                   <dt>Quantity</dt>
-                  <dd>{token.quantityKg ? `${token.quantityKg} kg` : "—"}</dd>
+                  <dd>
+                    {token.quantityKg ? `${token.quantityKg} kg` : "—"}
+                  </dd>
                 </div>
 
                 {token.timeSlot && (
@@ -502,6 +539,7 @@ function FarmerDashboard() {
               <span className="farmer-dash__empty-icon" aria-hidden="true">
                 📋
               </span>
+
               <p>
                 No active procurement request.
                 <br />
@@ -532,6 +570,7 @@ function FarmerDashboard() {
               >
                 Center
               </label>
+
               <select
                 id="center-select"
                 className="farmer-dash__center-select"
@@ -560,6 +599,7 @@ function FarmerDashboard() {
             >
               Requested Date
             </label>
+
             <input
               id="requested-date"
               type="date"
@@ -579,6 +619,7 @@ function FarmerDashboard() {
             >
               Quantity (kg)
             </label>
+
             <input
               id="quantity-kg"
               type="number"
@@ -596,7 +637,11 @@ function FarmerDashboard() {
             className="farmer-dash__btn farmer-dash__btn--primary"
             onClick={handleRequestToken}
             disabled={
-              tokenLoading || !selectedCenterId || !requestedDate || !quantityKg
+              tokenLoading ||
+              !farmerId ||
+              !selectedCenterId ||
+              !requestedDate ||
+              !quantityKg
             }
           >
             {tokenLoading
@@ -621,7 +666,9 @@ function FarmerDashboard() {
 
           <div className="farmer-dash__card">
             {centersLoading ? (
-              <p className="farmer-dash__loading-msg">Loading schedule…</p>
+              <p className="farmer-dash__loading-msg">
+                Loading schedule…
+              </p>
             ) : selectedCenter ? (
               <dl className="farmer-dash__schedule-details">
                 <div className="farmer-dash__detail-row">
@@ -651,12 +698,13 @@ function FarmerDashboard() {
 
                 <div className="farmer-dash__detail-row">
                   <dt>Status</dt>
+
                   <dd>
                     <StatusBadge
                       status={
                         isCenterOpen(
                           selectedCenter.open_date,
-                          selectedCenter.close_date,
+                          selectedCenter.close_date
                         )
                           ? "Open"
                           : "Closed"
@@ -683,7 +731,9 @@ function FarmerDashboard() {
 
           <div className="farmer-dash__card">
             {pricesLoading ? (
-              <p className="farmer-dash__loading-msg">Loading prices…</p>
+              <p className="farmer-dash__loading-msg">
+                Loading prices…
+              </p>
             ) : prices.length > 0 ? (
               <table className="farmer-dash__price-table">
                 <thead>
@@ -692,10 +742,12 @@ function FarmerDashboard() {
                     <th scope="col">MSP Rate</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {prices.map((item) => (
                     <tr key={item.crop}>
                       <td>{item.crop}</td>
+
                       <td className="farmer-dash__price-value">
                         {formatPrice(item.mspRate)}
                       </td>
