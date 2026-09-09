@@ -158,13 +158,39 @@ Unchanged behavior. Optional `?crop_type=` filter. Response now includes `daily_
 Same shape as one item above. `404` if not found.
 
 ### `POST /centers` / `PATCH /centers/{id}`
-Admin center management — unchanged from last version except the body now accepts/returns `daily_capacity_kg` (defaults to `5000` if omitted on create).
+Admin center management — body accepts/returns `daily_capacity_kg` (defaults to `5000` if omitted on create). `PATCH` handles crop-price updates too — send just `{"msp_rate": 2450}`, no separate price endpoint exists.
+
+### `DELETE /centers/{id}`
+Admin: permanently delete a center. **No request body.**
+
+**Success — `204 No Content`.**
+
+**Errors:**
+- `404 Not Found` — `{"detail": "Center not found"}`
+- `400 Bad Request` — `{"detail": "Can't delete a center with existing tokens or assigned staff. Use PATCH with {\"is_active\": false} to deactivate it instead."}`
 
 ### `GET /centers/{id}/queue`
 Unchanged URL. `?status=` now accepts any of the 6 statuses — e.g. `?status=pending` to see the approval queue, `?status=waiting` to see who's up next. Ordered by `token_number` (approved tokens first, in order), then `created_at` (pending requests, oldest first).
 
 ### `GET /users`
-Unchanged. `?role=admin|procurement|farmer` optional filter.
+Unchanged. `?role=admin|procurement|farmer` optional filter. Response now includes `is_active`.
+
+### `PATCH /users/{id}`
+Admin: edit a profile, or deactivate one. **This is how you "remove" a user without breaking their token history** — set `{"is_active": false}` instead of deleting.
+
+**Request body (all optional):**
+```json
+{ "is_active": false }
+```
+
+**Success — `200 OK`:** updated profile.
+**Errors:** `400` empty body, or bad `center_id`; `404` not found.
+
+### `DELETE /users/{id}`
+Admin: **permanently deletes the person's Supabase Auth account** (not just the profile row) — this removes their ability to log in entirely. Their profile is removed automatically via cascade; any of their existing tokens remain in the database but will reference a `farmer_id` with no profile attached. **No request body.**
+
+**Success — `204 No Content`.**
+**Errors:** `404` if the auth user doesn't exist; `500` on other auth API failures.
 
 ---
 

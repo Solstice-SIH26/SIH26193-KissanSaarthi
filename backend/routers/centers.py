@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import Optional, List
 import uuid
 
+from postgrest.exceptions import APIError
+
 from models import CenterOut, TokenOut, CenterCreate, CenterUpdate
 from db import supabase
 
@@ -59,7 +61,9 @@ def create_center(payload: CenterCreate):
 def update_center(center_id: uuid.UUID, payload: CenterUpdate):
     """
     Admin: update an existing center. Only fields provided in the request
-    body are changed — omitted fields are left as-is.
+    body are changed — omitted fields are left as-is. This is also how
+    you update crop price: PATCH with just {"msp_rate": 2450} — there's
+    no separate price-only endpoint, this one already covers it.
 
     TEMPORARY: same no-role-check caveat as create_center above.
     """
@@ -71,11 +75,46 @@ def update_center(center_id: uuid.UUID, payload: CenterUpdate):
         supabase.table("procurement_centers")
         .update(updates)
         .eq("id", str(center_id))
+        .select("*")
         .execute()
     )
     if not res.data:
         raise HTTPException(status_code=404, detail="Center not found")
     return res.data[0]
+
+
+@router.delete("/{center_id}", status_code=204)
+def delete_center(center_id: uuid.UUID):
+    """
+    Admin: permanently delete a center.
+
+    A center with existing tokens or assigned staff (profiles.center_id)
+    can't be deleted — the foreign keys block it. That's caught below and
+    returned as a clear 400 instead of a raw Postgres error. In most
+    cases you want PATCH .../is_active=false (deactivate) instead of a
+    real delete, since deleting loses the center's history entirely.
+    """
+    try:
+        res = (
+            supabase.table("procurement_centers")
+            .delete()
+            .eq("id", str(center_id))
+            .execute()
+        )
+    except APIError as e:
+        if e.code == "23503":  # foreign key violation
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Can't delete a center with existing tokens or assigned staff. "
+                    "Use PATCH with {\"is_active\": false} to deactivate it instead."
+                ),
+            )
+        raise HTTPException(status_code=500, detail="Could not delete center")
+
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Center not found")
+    return None
 
 
 @router.get("/{center_id}/queue", response_model=List[TokenOut])

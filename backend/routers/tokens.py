@@ -187,6 +187,7 @@ def approve_token(token_id: uuid.UUID):
             "updated_at": datetime.now(timezone.utc).isoformat(),
         })
         .eq("id", str(token_id))
+        .select("*")
         .execute()
     )
     if not update_res.data:
@@ -210,6 +211,7 @@ def reject_token(token_id: uuid.UUID):
         supabase.table("tokens")
         .update({"status": "rejected", "updated_at": datetime.now(timezone.utc).isoformat()})
         .eq("id", str(token_id))
+        .select("*")
         .execute()
     )
     if not res.data:
@@ -238,6 +240,7 @@ def cancel_token(token_id: uuid.UUID):
         supabase.table("tokens")
         .update({"status": "cancelled", "updated_at": datetime.now(timezone.utc).isoformat()})
         .eq("id", str(token_id))
+        .select("*")
         .execute()
     )
     if not res.data:
@@ -274,6 +277,7 @@ def update_token_status(token_id: uuid.UUID, payload: TokenStatusUpdate):
         supabase.table("tokens")
         .update({"status": target, "updated_at": datetime.now(timezone.utc).isoformat()})
         .eq("id", str(token_id))
+        .select("*")
         .execute()
     )
     if not res.data:

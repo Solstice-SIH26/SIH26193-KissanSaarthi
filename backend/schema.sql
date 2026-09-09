@@ -40,6 +40,7 @@ create table if not exists profiles (
     phone       text unique,
     role        text not null check (role in ('admin', 'procurement', 'farmer')),
     center_id   uuid references procurement_centers(id), -- set only when role = 'procurement'
+    is_active   boolean not null default true, -- admin can deactivate without deleting the auth login
     created_at  timestamptz not null default now()
 );
 

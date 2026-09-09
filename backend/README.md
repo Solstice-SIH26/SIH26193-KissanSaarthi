@@ -32,9 +32,12 @@ Interactive API docs: http://localhost:8000/docs
 | GET    | `/centers`                  | Farmer (browse)      | optional `?crop_type=`                 | List of centers |
 | GET    | `/centers/{center_id}`      | Farmer / staff        | —                                       | Single center object |
 | POST   | `/centers`                  | Admin (create center) | full center fields incl. `daily_capacity_kg` | New center object |
-| PATCH  | `/centers/{center_id}`      | Admin (edit center)   | any subset of center fields            | Updated center object |
+| PATCH  | `/centers/{center_id}`      | Admin (edit center, incl. price) | any subset of center fields (e.g. just `{"msp_rate": 2450}`) | Updated center object |
+| DELETE | `/centers/{center_id}`      | Admin (remove center) | —                                       | `204 No Content` |
 | GET    | `/centers/{center_id}/queue`| Procurement staff     | optional `?status=`                    | List of tokens for that center |
 | GET    | `/users`                    | Admin (manage users)  | optional `?role=admin\|procurement\|farmer` | List of profiles |
+| PATCH  | `/users/{user_id}`          | Admin (edit/deactivate) | any subset (e.g. `{"is_active": false}`) | Updated profile |
+| DELETE | `/users/{user_id}`          | Admin (remove account) | —                                       | `204 No Content` |
 | GET    | `/health`                   | anyone                | —                                       | `{"status": "ok"}` |
 
 Full request/response schemas are auto-generated at `/docs`.
@@ -62,6 +65,7 @@ Railway project dashboard (not from `.env` — that file isn't committed).
 ## Incomplete / temporary — flag before demo day
 
 - **No auth yet.** All endpoints — including admin ones — trust whatever the client sends, with no role check. JWT verification is planned once login is working on the auth side.
+- **DELETE endpoints do real, permanent deletion** — `DELETE /centers/{id}` fails cleanly (400) if the center has existing tokens or assigned staff; prefer `PATCH .../is_active=false` to deactivate instead. `DELETE /users/{id}` removes the actual Supabase Auth account (via Admin API), which cascades to remove their profile — their historical tokens remain in the `tokens` table but will reference a `farmer_id` with no profile attached. Prefer `PATCH /users/{id}` with `{"is_active": false}` if you want to keep clean history.
 - **`token_number` and `time_slot` assignment has no locking** — two staff approving simultaneously for the same center+date could theoretically race. Fine for demo load.
 - **Time slots are fixed 25-min spacing from 9:00 AM**, not configurable per center yet — flagged for team lead to confirm.
 - **CORS is wide open** (`allow_origins=["*"]`) — narrow this once the real frontend URL (Vercel) is known.

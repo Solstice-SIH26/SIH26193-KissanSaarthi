@@ -1,74 +1,204 @@
-import { useState } from "react";
-import { supabase } from "./supabaseClient";
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from './supabaseClient'
+import './LoginPage.css'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loginMethod, setLoginMethod] = useState('email') // 'email' or 'phone'
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+    e.preventDefault()
+    setError('')
+    setLoading(true)
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    await supabase.auth.signOut()
 
-    setLoading(false);
 
-    if (error) {
-      setError(error.message);
-      return;
+    let loginEmail = email
+
+    if (loginMethod === 'phone') {
+      let normalizedPhone = phone.replace(/\s+/g, '')
+      // Ensure it starts with +91
+      if (!normalizedPhone.startsWith('+91')) {
+        // strip any leading 0 or +, then prepend +91
+        normalizedPhone = normalizedPhone.replace(/^(\+?91|0)/, '')
+        normalizedPhone = `+91${normalizedPhone}`
+      }
+
+      const { data: matchedProfile, error: lookupError } = await supabase
+        .from('profiles')
+        .select('id, phone')
+        .eq('phone', normalizedPhone)
+        .single()
+
+      if (lookupError || !matchedProfile) {
+        setError('Phone number not found')
+        setLoading(false)
+        return
+      }
+
+      loginEmail = `${normalizedPhone}@farmerapp.local`
     }
 
-    console.log("Logged in user:", data.user);
-    console.log("Session:", data.session);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
+      password,
+    })
 
-    // TODO: once profiles table is ready, look up role here and redirect:
-    // const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single()
-    // then redirect based on profile.role → /farmer, /staff, /admin
+    setLoading(false)
 
-    // Temporary stub for now, so you can keep building redirect logic:
-    const fakeRole = "farmer"; // hardcode 'farmer' / 'staff' / 'admin' to test each path
-    console.log("Stubbed role (replace once profiles lands):", fakeRole);
-  };
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single()
+
+    if (profileError || !profile) {
+      setError('Could not determine user role')
+      return
+    }
+
+    if (profile.role === 'farmer') navigate('/farmer')
+    else if (profile.role === 'procurement') navigate('/staff')
+    else if (profile.role === 'admin') navigate('/admin')
+  }
 
   return (
-    <div style={{ maxWidth: 320, margin: "80px auto" }}>
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <div style={{ marginBottom: 12 }}>
-          <label>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: "100%", padding: 8 }}
-          />
+    <div className="login-page">
+
+      {/* LEFT SIDE - FARMER IMAGE */}
+      <div className="login-image">
+        <img
+          src="/farmer.jpg"
+          alt="Farmer working in a field"
+        />
+
+        <div className="image-overlay">
+          <h1>KisanSaarthi</h1>
+          <p>
+            Simple, smarter procurement<br />
+            for every farmer.
+          </p>
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: "100%", padding: 8 }}
-          />
+      </div>
+
+      {/* RIGHT SIDE - LOGIN */}
+      <div className="login-panel">
+
+        <div className="login-card">
+
+          <div className="brand">
+            <span className="brand-icon">🌾</span>
+            <div>
+              <h2>KisanSaarthi</h2>
+              <p>Smart Agricultural Procurement</p>
+            </div>
+          </div>
+
+          <h1>Welcome back</h1>
+
+          <p className="subtitle">
+            Login to access your procurement dashboard
+          </p>
+
+          {/* EMAIL / PHONE SWITCH */}
+          <div className="login-method">
+            <button
+              type="button"
+              className={loginMethod === 'email' ? 'active' : ''}
+              onClick={() => {
+                setLoginMethod('email')
+                setError('')
+              }}
+            >
+              Email
+            </button>
+
+            <button
+              type="button"
+              className={loginMethod === 'phone' ? 'active' : ''}
+              onClick={() => {
+                setLoginMethod('phone')
+                setError('')
+              }}
+            >
+              Phone
+            </button>
+          </div>
+
+          <form onSubmit={handleLogin}>
+
+            {loginMethod === 'email' ? (
+              <>
+                <label>Email address</label>
+
+                <input
+                  type="email"
+                  placeholder="farmer@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </>
+            ) : (
+              <>
+                <label>Phone number</label>
+
+                <input
+                  type="tel"
+                  placeholder="+91 9876543210"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                />
+              </>
+            )}
+
+            <label>Password</label>
+
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+
+            {error && (
+              <div className="login-error">
+                {error}
+              </div>
+            )}
+
+            <button
+              className="login-button"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? 'Logging in...' : 'Log In'}
+            </button>
+
+          </form>
+
+          <p className="login-note">
+            Farmers can login using email or phone.
+            <br />
+            Staff and administrators use email login.
+          </p>
+
         </div>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          style={{ width: "100%", padding: 10 }}
-        >
-          {loading ? "Logging in..." : "Log In"}
-        </button>
-      </form>
+      </div>
     </div>
-  );
+  )
 }

@@ -1,30 +1,53 @@
-import { useState } from "react";
-import StaffDashboard from "./pages/staff/StaffDashboard";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import LoginPage from "./LoginPage";
+import ProtectedRoute from "./ProtectedRoute";
+
 import FarmerDashboard from "./pages/farmer/FarmerDashboard";
+import StaffDashboard from "./pages/staff/StaffDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import HomePage from "./HomePage";
 
 function App() {
-  const [view, setView] = useState("staff");
-
   return (
-    <div>
-      <div style={{ padding: "10px", background: "#f8fafc", display: "flex", gap: "10px", justifyContent: "center", borderBottom: "1px solid #e2e8f0" }}>
-        <button
-          onClick={() => setView("farmer")}
-          style={{ padding: "8px 16px", fontWeight: view === "farmer" ? "bold" : "normal", cursor: "pointer", background: view === "farmer" ? "#e2e8f0" : "#fff", border: "1px solid #cbd5e1", borderRadius: "4px" }}
-        >
-          Farmer View
-        </button>
+    <BrowserRouter>
+      <Routes>
+        {/* Public route */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
 
-        <button
-          onClick={() => setView("staff")}
-          style={{ padding: "8px 16px", fontWeight: view === "staff" ? "bold" : "normal", cursor: "pointer", background: view === "staff" ? "#e2e8f0" : "#fff", border: "1px solid #cbd5e1", borderRadius: "4px" }}
-        >
-          Staff View
-        </button>
-      </div>
+        {/* Protected routes */}
+        <Route
+          path="/farmer"
+          element={
+            <ProtectedRoute allowedRole="farmer">
+              <FarmerDashboard />
+            </ProtectedRoute>
+          }
+        />
 
-      {view === "staff" ? <StaffDashboard /> : <FarmerDashboard />}
-    </div>
+        <Route
+          path="/staff"
+          element={
+            <ProtectedRoute allowedRole="procurement">
+              <StaffDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Default */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
