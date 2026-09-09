@@ -85,6 +85,36 @@ class ProfileOut(BaseModel):
     created_at: datetime
 
 
+# =========================================================
+# Voice (Vapi) — caller identification + context
+# =========================================================
+
+class ActiveTokenContext(BaseModel):
+    """One of a farmer's active (pending/waiting/called) requests, with the
+    procurement centre's name folded in so the voice assistant can read it
+    out without a second lookup."""
+
+    id: uuid.UUID
+    center_id: uuid.UUID
+    center_name: Optional[str] = None
+    requested_date: date
+    crop_type: str
+    quantity_kg: float
+    token_number: Optional[int] = None  # NULL until approved
+    time_slot: Optional[str] = None     # NULL until approved
+    status: TokenStatus
+
+
+class VoiceContextOut(BaseModel):
+    """Response for GET /voice/context — everything the Vapi assistant
+    needs to greet the caller and discuss their existing requests."""
+
+    demo_mode_used: bool
+    caller_number: str  # normalized E.164
+    farmer_id: uuid.UUID
+    farmer_name: str
+    active_tokens: list[ActiveTokenContext]
+
 class ProfileUpdate(BaseModel):
     # All fields optional — PATCH only updates what's provided.
     name: Optional[str] = None
