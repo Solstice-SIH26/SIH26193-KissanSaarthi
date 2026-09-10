@@ -1,6 +1,6 @@
 # Demo Video
 
-**Video link:** [ADD YOUR DEMO VIDEO LINK HERE]
+**Video link:** https://youtu.be/Hlox3tG3t-c
 
 ## What the video covers
 

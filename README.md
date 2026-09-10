@@ -229,19 +229,6 @@ sih26-ps26032/
 
 ---
 
-## Team — Solstice
-
-| Member        | Role                    |
-| ------------- | ----------------------- |
-| [Member Name] | [Role / Responsibility] |
-| [Member Name] | [Role / Responsibility] |
-| [Member Name] | [Role / Responsibility] |
-| [Member Name] | [Role / Responsibility] |
-| [Member Name] | [Role / Responsibility] |
-| [Member Name] | [Role / Responsibility] |
-
----
-
 ## Future Scope
 
 - Regional-language voice support

@@ -1,6 +1,6 @@
 # Presentation
 
-**PPT:** [ADD LINK TO YOUR PPT — Google Slides link, or note "see PRESENTATION.pdf in this folder" if you're uploading the file directly]
+**PPT:** https://drive.google.com/drive/folders/1QzSbUtkE6AU-o15POiDTgh4nJrE64aFy
 
 ## Summary
 
