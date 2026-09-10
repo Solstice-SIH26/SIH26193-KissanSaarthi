@@ -42,14 +42,10 @@
   justify-content: space-between;
   align-items: center;
 
-  /* Smaller desktop header */
   padding: 18px 6%;
 
-  /* Muted olive / agricultural green */
-  background: rgba(57, 73, 40, 0.94);
-
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  /* Transparent desktop navbar */
+  background: transparent;
 
   box-sizing: border-box;
 }
