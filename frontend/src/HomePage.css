@@ -32,7 +32,7 @@
    ============================================================ */
 
 .hero-nav {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -614,11 +614,21 @@
 
 @media (max-width: 640px) {
   .hero-nav {
-    padding: 14px 5%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
 
+    padding: 14px 5%;
     min-height: 60px;
 
-    background: rgba(57, 73, 40, 0.96);
+    /* Subtle dark glass */
+    background: rgba(20, 30, 20, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   .hero-brand {
