@@ -1,7 +1,5 @@
 # KisanSaarthi — Smart Procurement Platform for Farmers
 
-**Problem Statement:** PS26032 — Ministry of Consumer Affairs, Food & Public Distribution  
-**Theme:** Smart Automation  
 **Team:** Solstice · Netaji Subhas University of Technology (NSUT)
 
 ---
@@ -78,15 +76,15 @@ flowchart TB
 
 ### Access Model
 
-| User                  | Access Channel                        | Main Responsibilities                                                         |
-| --------------------- | ------------------------------------- | ----------------------------------------------------------------------------- |
-| **Farmer**            | Web Dashboard / Phone Voice Interface | Submit procurement requests, track requests, and receive procurement updates  |
-| **Procurement Staff** | Web Dashboard                         | Review requests, manage tokens, queues, capacity, and procurement operations  |
-| **Admin**             | Web Dashboard                         | Manage procurement centres, system information, and administrative operations |
+| User | Access Channel | Main Responsibilities |
+|---|---|---|
+| **Farmer** | Web Dashboard / Phone Voice Interface | Submit procurement requests, track requests, and receive procurement updates |
+| **Procurement Staff** | Web Dashboard | Review requests, manage tokens, queues, capacity, and procurement operations |
+| **Admin** | Web Dashboard | Manage procurement centres, system information, and administrative operations |
 
 ---
 
-### Procurement Workflow
+## Procurement Workflow
 
 1. **Farmer submits a request** through the web dashboard or supported voice interface.
 2. **Backend processes the request** and performs the required validation.
@@ -147,8 +145,11 @@ flowchart TB
 
 ## Live Links
 
-- **Live Website:** https://kisansaarthi-032.netlify.app/
-- **Backend API Documentation:** https://sih26-ps26032-production.up.railway.app/docs
+The application is deployed using cloud-based frontend, backend, and database services.
+
+- **Frontend:** Netlify
+- **Backend:** Railway
+- **Database & Authentication:** Supabase
 
 ---
 
@@ -197,7 +198,7 @@ presentation / pitch deck.
 ## Repository Structure
 
 ```text
-sih26-ps26032/
+KissanSaarthi/
 │
 ├── frontend/                         # React + Vite web application
 │   ├── src/                          # Frontend source code
@@ -218,7 +219,7 @@ sih26-ps26032/
 ├── assets/
 │   └── screenshots/                  # Project screenshots
 │
-├── submission/                       # SIH submission material
+├── submission/                       # Submission material
 │   ├── PRESENTATION.md               # Presentation information
 │   └── DEMO.md                       # Demo video information
 │
@@ -242,4 +243,4 @@ sih26-ps26032/
 
 ## License
 
-This project was developed for **Smart India Hackathon 2026**.
+This project was developed as part of **Smart India Hackathon 2026**.
