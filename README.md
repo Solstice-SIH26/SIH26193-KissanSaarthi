@@ -76,11 +76,11 @@ flowchart TB
 
 ### Access Model
 
-| User | Access Channel | Main Responsibilities |
-|---|---|---|
-| **Farmer** | Web Dashboard / Phone Voice Interface | Submit procurement requests, track requests, and receive procurement updates |
-| **Procurement Staff** | Web Dashboard | Review requests, manage tokens, queues, capacity, and procurement operations |
-| **Admin** | Web Dashboard | Manage procurement centres, system information, and administrative operations |
+| User                  | Access Channel                        | Main Responsibilities                                                         |
+| --------------------- | ------------------------------------- | ----------------------------------------------------------------------------- |
+| **Farmer**            | Web Dashboard / Phone Voice Interface | Submit procurement requests, track requests, and receive procurement updates  |
+| **Procurement Staff** | Web Dashboard                         | Review requests, manage tokens, queues, capacity, and procurement operations  |
+| **Admin**             | Web Dashboard                         | Manage procurement centres, system information, and administrative operations |
 
 ---
 
@@ -147,30 +147,39 @@ flowchart TB
 
 The application is deployed using cloud-based frontend, backend, and database services.
 
-- **Frontend:** Netlify
-- **Backend:** Railway
-- **Database & Authentication:** Supabase
+- 🌐 **Frontend:** https://kisansaarthi-solstice.netlify.app/
+- 📚 **Backend API Docs:** https://sih26193-kissansaarthi-production.up.railway.app/docs
 
 ---
 
 ## Screenshots
 
-Project screenshots are available in
-[`assets/screenshots/`](./assets/screenshots/).
+The main dashboards are shown below.
 
-### Farmer Dashboard
+<table>
+<tr>
+<td width="53%" valign="top">
 
-![Farmer Dashboard](./assets/screenshots/farmer-dashboard.png)
+<h3>Farmer Dashboard</h3>
 
-### Procurement Staff Dashboard
+<img src="./assets/screenshots/farmer-dashboard.png" alt="Farmer Dashboard" width="100%">
 
-![Procurement Staff Dashboard](./assets/screenshots/staff-dashboard.png)
+</td>
+<td width="47%" valign="top">
 
-### Admin Dashboard
+<h3>Procurement Staff Dashboard</h3>
 
-![Admin Dashboard](./assets/screenshots/admin-dashboard.png)
+<img src="./assets/screenshots/staff-dashboard.png" alt="Procurement Staff Dashboard" width="100%">
 
-### Procurement / Token Workflow
+<br>
+
+<h3>Admin Dashboard</h3>
+
+<img src="./assets/screenshots/admin-dashboard.png" alt="Admin Dashboard" width="100%">
+
+</td>
+</tr>
+</table>
 
 ---
 

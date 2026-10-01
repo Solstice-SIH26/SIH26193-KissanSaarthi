@@ -186,7 +186,7 @@ export default function HomePage() {
         </p>
         <div className="home-footer-bottom">
           <span>🌾 KisanSaarthi</span>
-          <span>Smart India Hackathon 2026 · PS26032</span>
+          <span>Smart India Hackathon 2026 · PS26193</span>
           <span>Built by Team Solstice</span>
         </div>
       </footer>

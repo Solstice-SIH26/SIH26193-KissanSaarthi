@@ -1,5 +1,5 @@
 -- ============================================================
--- SIH PS26032 — PROCUREMENT CENTER SEED DATA
+-- SIH PS26193 — PROCUREMENT CENTER SEED DATA
 -- 40 distinct real mandi/APMC locations
 --
 -- Run schema.sql first.

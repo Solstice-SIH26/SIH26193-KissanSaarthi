@@ -1,10 +1,10 @@
 # Presentation
 
-**PPT:** https://drive.google.com/drive/folders/1QzSbUtkE6AU-o15POiDTgh4nJrE64aFy
+**PPT:** https://drive.google.com/drive/folders/1zg3MIMXJSKPvmbmBoPWJ59Vow8zYvqko?usp=drive_link
 
 ## Summary
 
-KisanSaarthi is a voice-first procurement platform solving PS26032 —
+KisanSaarthi is a voice-first procurement platform solving PS26193 —
 farmers facing long waits, unclear schedules, and no visibility into
 procurement status at government centres.
 

@@ -1,4 +1,4 @@
-# Frontend Guide — SIH PS26032
+# Frontend Guide — SIH PS26193
 
 ## 1. Overview
 
@@ -59,11 +59,11 @@ Centralized HTTP wrapper used by the frontend service modules.
 
 Handles procurement token operations.
 
-| Function | Method | Endpoint | Purpose |
-|---|---|---|---|
-| `requestToken()` | POST | `/tokens` | Create a new procurement token |
-| `getToken()` | GET | `/tokens/{id}` | Get the current token details/status |
-| `updateTokenStatus()` | PATCH | `/tokens/{id}/status` | Update a token's status |
+| Function              | Method | Endpoint              | Purpose                              |
+| --------------------- | ------ | --------------------- | ------------------------------------ |
+| `requestToken()`      | POST   | `/tokens`             | Create a new procurement token       |
+| `getToken()`          | GET    | `/tokens/{id}`        | Get the current token details/status |
+| `updateTokenStatus()` | PATCH  | `/tokens/{id}/status` | Update a token's status              |
 
 **Currently used by:** Farmer Dashboard for token creation and status refresh.
 
@@ -73,12 +73,12 @@ Handles procurement token operations.
 
 Handles procurement center and queue-related API calls.
 
-| Function | Method | Endpoint | Purpose |
-|---|---|---|---|
-| `getCenters()` | GET | `/centers` | Get all active procurement centers |
-| `getCenters(cropType)` | GET | `/centers?crop_type=...` | Get centers filtered by crop type |
-| `getCenter()` | GET | `/centers/{id}` | Get details of a specific center |
-| `getCenterQueue()` | GET | `/centers/{id}/queue` | Get the token queue for a center |
+| Function               | Method | Endpoint                 | Purpose                            |
+| ---------------------- | ------ | ------------------------ | ---------------------------------- |
+| `getCenters()`         | GET    | `/centers`               | Get all active procurement centers |
+| `getCenters(cropType)` | GET    | `/centers?crop_type=...` | Get centers filtered by crop type  |
+| `getCenter()`          | GET    | `/centers/{id}`          | Get details of a specific center   |
+| `getCenterQueue()`     | GET    | `/centers/{id}/queue`    | Get the token queue for a center   |
 
 `getCenterQueue()` can also pass a status filter:
 
@@ -166,11 +166,11 @@ So there are **no active `/farmer`, `/staff`, or `/admin` routes yet**.
 
 The agreed role-based structure is:
 
-| Role | Route | Page |
-|---|---|---|
+| Role   | Route     | Page             |
+| ------ | --------- | ---------------- |
 | Farmer | `/farmer` | Farmer Dashboard |
-| Staff | `/staff` | Staff Dashboard |
-| Admin | `/admin` | Admin Dashboard |
+| Staff  | `/staff`  | Staff Dashboard  |
+| Admin  | `/admin`  | Admin Dashboard  |
 
 Once authentication/profile integration is completed, the login flow should determine the user's role and redirect to the appropriate route.
 
@@ -277,19 +277,19 @@ frontend/
 
 ## 10. Quick Reference
 
-| Area | Current State |
-|---|---|
-| Farmer Dashboard | Implemented |
-| Farmer API integration | Implemented |
-| Staff Dashboard | Not implemented |
-| Call Next UI | Not implemented |
-| Admin UI | Not implemented |
-| Supabase login | Implemented |
-| Role-based routing | Not implemented |
-| Backend authentication | Not implemented |
-| Farmer ID | Temporary hardcoded UUID |
-| API wrapper | Implemented |
-| API contract | `backend/API_CONTRACT.md` |
+| Area                   | Current State             |
+| ---------------------- | ------------------------- |
+| Farmer Dashboard       | Implemented               |
+| Farmer API integration | Implemented               |
+| Staff Dashboard        | Not implemented           |
+| Call Next UI           | Not implemented           |
+| Admin UI               | Not implemented           |
+| Supabase login         | Implemented               |
+| Role-based routing     | Not implemented           |
+| Backend authentication | Not implemented           |
+| Farmer ID              | Temporary hardcoded UUID  |
+| API wrapper            | Implemented               |
+| API contract           | `backend/API_CONTRACT.md` |
 
 ---
 

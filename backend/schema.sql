@@ -1,4 +1,4 @@
--- SIH PS26032 — Procurement Center System
+-- SIH PS26193 — Procurement Center System
 -- Schema for Supabase (Postgres)
 -- Run this in the Supabase SQL editor, or via `supabase db push` if using migrations.
 --
