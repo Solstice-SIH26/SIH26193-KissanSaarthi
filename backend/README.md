@@ -1,4 +1,4 @@
-# SIH PS26032 — Procurement Center API (backend, WIP)
+# SIH PS26193 — Procurement Center API (backend, WIP)
 
 Token queue + schedule + MSP price endpoints for the farmer/procurement/admin app.
 This covers **schema + token/queue/schedule/price endpoints only**. Admin UI,
@@ -21,24 +21,24 @@ Interactive API docs: http://localhost:8000/docs
 
 ## Endpoints
 
-| Method | Path                        | Who calls it        | Body / Query                          | Returns |
-|--------|-----------------------------|----------------------|----------------------------------------|---------|
-| POST   | `/tokens`                   | Farmer (submit request) | `{farmer_id, center_id, requested_date, crop_type, quantity_kg}` | New token, `status: pending` |
-| GET    | `/tokens/{token_id}`        | Farmer (check status)| —                                       | Token object |
-| PATCH  | `/tokens/{token_id}/approve`| Procurement staff     | — (no body)                             | Token with `status: waiting`, `token_number`, `time_slot` assigned |
-| PATCH  | `/tokens/{token_id}/reject` | Procurement staff     | — (no body)                             | Token with `status: rejected` |
-| PATCH  | `/tokens/{token_id}/cancel` | Farmer or staff       | — (no body)                             | Token with `status: cancelled` |
-| PATCH  | `/tokens/{token_id}/status` | Procurement staff     | `{status}` — only `waiting→called` or `called→completed` | Updated token |
-| GET    | `/centers`                  | Farmer (browse)      | optional `?crop_type=`                 | List of centers |
-| GET    | `/centers/{center_id}`      | Farmer / staff        | —                                       | Single center object |
-| POST   | `/centers`                  | Admin (create center) | full center fields incl. `daily_capacity_kg` | New center object |
-| PATCH  | `/centers/{center_id}`      | Admin (edit center, incl. price) | any subset of center fields (e.g. just `{"msp_rate": 2450}`) | Updated center object |
-| DELETE | `/centers/{center_id}`      | Admin (remove center) | —                                       | `204 No Content` |
-| GET    | `/centers/{center_id}/queue`| Procurement staff     | optional `?status=`                    | List of tokens for that center |
-| GET    | `/users`                    | Admin (manage users)  | optional `?role=admin\|procurement\|farmer` | List of profiles |
-| PATCH  | `/users/{user_id}`          | Admin (edit/deactivate) | any subset (e.g. `{"is_active": false}`) | Updated profile |
-| DELETE | `/users/{user_id}`          | Admin (remove account) | —                                       | `204 No Content` |
-| GET    | `/health`                   | anyone                | —                                       | `{"status": "ok"}` |
+| Method | Path                         | Who calls it                     | Body / Query                                                     | Returns                                                            |
+| ------ | ---------------------------- | -------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------ |
+| POST   | `/tokens`                    | Farmer (submit request)          | `{farmer_id, center_id, requested_date, crop_type, quantity_kg}` | New token, `status: pending`                                       |
+| GET    | `/tokens/{token_id}`         | Farmer (check status)            | —                                                                | Token object                                                       |
+| PATCH  | `/tokens/{token_id}/approve` | Procurement staff                | — (no body)                                                      | Token with `status: waiting`, `token_number`, `time_slot` assigned |
+| PATCH  | `/tokens/{token_id}/reject`  | Procurement staff                | — (no body)                                                      | Token with `status: rejected`                                      |
+| PATCH  | `/tokens/{token_id}/cancel`  | Farmer or staff                  | — (no body)                                                      | Token with `status: cancelled`                                     |
+| PATCH  | `/tokens/{token_id}/status`  | Procurement staff                | `{status}` — only `waiting→called` or `called→completed`         | Updated token                                                      |
+| GET    | `/centers`                   | Farmer (browse)                  | optional `?crop_type=`                                           | List of centers                                                    |
+| GET    | `/centers/{center_id}`       | Farmer / staff                   | —                                                                | Single center object                                               |
+| POST   | `/centers`                   | Admin (create center)            | full center fields incl. `daily_capacity_kg`                     | New center object                                                  |
+| PATCH  | `/centers/{center_id}`       | Admin (edit center, incl. price) | any subset of center fields (e.g. just `{"msp_rate": 2450}`)     | Updated center object                                              |
+| DELETE | `/centers/{center_id}`       | Admin (remove center)            | —                                                                | `204 No Content`                                                   |
+| GET    | `/centers/{center_id}/queue` | Procurement staff                | optional `?status=`                                              | List of tokens for that center                                     |
+| GET    | `/users`                     | Admin (manage users)             | optional `?role=admin\|procurement\|farmer`                      | List of profiles                                                   |
+| PATCH  | `/users/{user_id}`           | Admin (edit/deactivate)          | any subset (e.g. `{"is_active": false}`)                         | Updated profile                                                    |
+| DELETE | `/users/{user_id}`           | Admin (remove account)           | —                                                                | `204 No Content`                                                   |
+| GET    | `/health`                    | anyone                           | —                                                                | `{"status": "ok"}`                                                 |
 
 Full request/response schemas are auto-generated at `/docs`.
 
@@ -52,6 +52,7 @@ Full request/response schemas are auto-generated at `/docs`.
 6. `PATCH /tokens/{id}/cancel` works from `pending` or `waiting` — capacity and the farmer's day-slot free up automatically since capacity/limit checks only count `pending`/`waiting`/`called`.
 
 **Limits enforced at request time (`POST /tokens`):**
+
 - One active request per farmer per `requested_date`, across any center
 - Max 3 active (`pending`/`waiting`/`called`) requests per farmer at once
 

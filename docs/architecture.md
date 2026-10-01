@@ -2,43 +2,69 @@
 
 ## System Overview
 
-KisanSaarthi follows a three-tier architecture: a React frontend, a
-FastAPI backend, and a Supabase (PostgreSQL) database, with a separate
-Vapi-based voice layer for phone access.
-
-[ADD YOUR ARCHITECTURE DIAGRAM IMAGE HERE — e.g. ![architecture](../assets/screenshots/architecture-diagram.png)]
+KisanSaarthi follows a three-tier architecture consisting of a React frontend, FastAPI backend, and Supabase PostgreSQL database. A separate Vapi-based voice layer provides phone-based access to farmer services.
 
 ## Components
 
-### Frontend (React + Vite)
+### Frontend — React + Vite
 
-- Role-based routing: `/`, `/login`, `/farmer`, `/staff`, `/admin`
-- Protected routes enforce role-based access using Supabase session + `profiles` table lookup
+- Role-based interfaces for Farmers, Staff, and Admins
+- Protected routes using Supabase authentication and profile-based role verification
+- Handles user interaction, request submission, token tracking, and status updates
 - Deployed on Netlify
 
-### Backend (FastAPI)
+### Backend — FastAPI
 
-- REST API handling authentication support, request validation, token
-  generation, slot allocation, and business logic
-- Enforces capacity checks and active-request limits at the approval step
+- REST API responsible for request handling and business logic
+- Handles request validation, token generation, slot allocation, and procurement workflows
+- Performs capacity checks and active-request validation before approval
+- Provides a dedicated `/voice/context` endpoint for the voice layer
+- API documentation available through FastAPI Swagger UI
 - Deployed on Railway
 
-### Database (Supabase / PostgreSQL)
+### Database — Supabase / PostgreSQL
 
-- Tables: `profiles`, `procurement_centers`, `tokens`
-- Row Level Security (RLS) enabled on all public-facing tables
-- Supabase Auth handles farmer/staff/admin login (email + phone)
+- Stores user profiles, procurement centers, requests, and token information
+- Supabase Auth manages user authentication
+- Row Level Security (RLS) protects database access
+- Supports role-based access for Farmer, Staff, and Admin users
 
-### Voice Layer (Vapi)
+### Voice Layer — Vapi
 
-- Handles inbound calls, identifies the farmer by phone number
-- Falls back to a demo profile if the caller's number isn't registered
-- Communicates with the backend via a dedicated `/voice/context` endpoint
+- Provides phone-based access for farmers
+- Identifies farmers using their registered phone number
+- Provides a fallback demo profile for unregistered numbers
+- Retrieves farmer and token information through the backend
 
 ## Request Flow
 
-1. Farmer submits a request (centre, date, crop, quantity) → status `pending`
-2. Staff reviews the request against the centre's remaining daily capacity
-3. On approval, backend assigns a `token_number` and `time_slot` → status `waiting`
-4. Staff calls the token forward → status `called` → `completed`
-5. Farmer sees live status updates on their dashboard (auto-refresh) or via a phone call
+1. Farmer submits a procurement request with centre, date, crop, and quantity.
+2. Backend validates the request and stores it with `pending` status.
+3. Staff reviews the request based on centre capacity and availability.
+4. On approval, the backend assigns a `token_number` and `time_slot`.
+5. The request moves to `waiting` status.
+6. Staff calls the next token, changing its status to `called`.
+7. After procurement, the token is marked `completed`.
+8. Farmer can view the latest status through the dashboard or access it through the voice system.
+
+## Deployment
+
+```text
+React + Vite
+     │
+     ▼
+  Netlify
+     │
+     ▼
+ FastAPI Backend
+     │
+     ├──────────► Vapi Voice Layer
+     │
+     ▼
+Supabase PostgreSQL
+```
+
+- **Frontend:** Netlify
+- **Backend:** Railway
+- **Database & Authentication:** Supabase
+- **Voice Interface:** Vapi

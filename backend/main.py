@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers import tokens, centers, users, voice, webhooks
 
 app = FastAPI(
-    title="SIH PS26032 — Procurement Center API",
+    title="SIH PS26193 — Procurement Center API",
     description="Token queue, schedule, and MSP price info for farmers, "
                 "procurement staff, and admin.",
     version="0.1.0",
